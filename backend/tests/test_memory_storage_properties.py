@@ -371,9 +371,12 @@ def test_stored_message_persists_to_disk(user_id, message):
         engine1 = MemoryEngine(firestore_client=None, indices_dir=temp_dir)
         engine1.store_memory(user_id, message, is_important=True)
         
-        # Verify index and metadata files were created
-        index_path = os.path.join(temp_dir, f"{user_id}.index")
-        metadata_path = os.path.join(temp_dir, f"{user_id}_metadata.json")
+        # Get the sanitized user_id (hashed filename)
+        safe_user_id = engine1._sanitize_user_id(user_id)
+        
+        # Verify index and metadata files were created with hashed filename
+        index_path = os.path.join(temp_dir, f"{safe_user_id}.index")
+        metadata_path = os.path.join(temp_dir, f"{safe_user_id}_metadata.json")
         
         assert os.path.exists(index_path), \
             f"FAISS index file should be created at {index_path}"

@@ -26,6 +26,15 @@ class PersonalitySystem:
         Args:
             personality_file: Path to the personality definition file
         """
+        # Handle both absolute and relative paths
+        # If running from backend/ directory, use waifu_personality.txt
+        # If running from project root, use backend/waifu_personality.txt
+        if not os.path.exists(personality_file):
+            # Try alternative path (remove 'backend/' prefix if present)
+            alt_file = personality_file.replace("backend/", "")
+            if os.path.exists(alt_file):
+                personality_file = alt_file
+        
         self.personality_definition = self._load_personality(personality_file)
         self.affection_behaviors = self._define_affection_tiers()
         self.mood_modifiers = self._define_mood_modifiers()

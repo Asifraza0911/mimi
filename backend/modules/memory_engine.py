@@ -10,6 +10,7 @@ Requirements: 3.1, 3.6
 import os
 import json
 import logging
+import hashlib
 import numpy as np
 import faiss
 from typing import List, Dict, Optional
@@ -54,6 +55,23 @@ class MemoryEngine:
         # Create indices directory if it doesn't exist
         os.makedirs(self.indices_dir, exist_ok=True)
     
+    def _sanitize_user_id(self, user_id: str) -> str:
+        """
+        Sanitize user_id to create a safe filename.
+        
+        Uses SHA-256 hash to convert any user_id (including those with special
+        Unicode characters) into a safe, filesystem-compatible filename.
+        
+        Args:
+            user_id: Original user identifier (may contain Unicode or special chars)
+            
+        Returns:
+            Sanitized filename-safe string (hex digest of SHA-256 hash)
+        """
+        # Use SHA-256 hash to create a safe, unique filename
+        # This handles all Unicode characters and special characters
+        return hashlib.sha256(user_id.encode('utf-8')).hexdigest()
+    
     def generate_embedding(self, text: str) -> np.ndarray:
         """
         Convert text to embedding vector using sentence-transformers.
@@ -86,9 +104,12 @@ class MemoryEngine:
         if user_id in self.user_indices:
             return self.user_indices[user_id]
         
+        # Sanitize user_id for safe file paths
+        safe_user_id = self._sanitize_user_id(user_id)
+        
         # Try to load index from disk
-        index_path = os.path.join(self.indices_dir, f"{user_id}.index")
-        metadata_path = os.path.join(self.indices_dir, f"{user_id}_metadata.json")
+        index_path = os.path.join(self.indices_dir, f"{safe_user_id}.index")
+        metadata_path = os.path.join(self.indices_dir, f"{safe_user_id}_metadata.json")
         
         if os.path.exists(index_path):
             # Load existing index from disk
@@ -134,12 +155,15 @@ class MemoryEngine:
         if user_id not in self.user_indices:
             return
         
+        # Sanitize user_id for safe file paths
+        safe_user_id = self._sanitize_user_id(user_id)
+        
         # Save index to disk
-        index_path = os.path.join(self.indices_dir, f"{user_id}.index")
+        index_path = os.path.join(self.indices_dir, f"{safe_user_id}.index")
         faiss.write_index(self.user_indices[user_id], index_path)
         
         # Save metadata to disk
-        metadata_path = os.path.join(self.indices_dir, f"{user_id}_metadata.json")
+        metadata_path = os.path.join(self.indices_dir, f"{safe_user_id}_metadata.json")
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(self.user_metadata[user_id], f, indent=2)
     

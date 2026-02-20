@@ -255,10 +255,10 @@ class TestLLMServiceAPICall:
             
             llm_service.generate_response(prompt="Test")
             
-            # Verify URL
+            # Verify URL - Updated for dual-model architecture (Qwen2.5-7B-Instruct for dialogue)
             call_args = mock_post.call_args
             url = call_args[0][0]
-            assert url == "https://api-inference.huggingface.co/models/google/flan-t5-large"
+            assert url == "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-7B-Instruct"
     
     def test_api_call_with_timeout(self):
         """

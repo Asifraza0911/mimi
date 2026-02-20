@@ -194,9 +194,12 @@ def test_index_persistence(memory_engine, temp_indices_dir):
     # Store memory
     memory_engine.store_memory(user_id, message, is_important=False)
     
-    # Check that files were created
-    index_path = os.path.join(temp_indices_dir, f"{user_id}.index")
-    metadata_path = os.path.join(temp_indices_dir, f"{user_id}_metadata.json")
+    # Get the sanitized user_id (hashed filename)
+    safe_user_id = memory_engine._sanitize_user_id(user_id)
+    
+    # Check that files were created with hashed filename
+    index_path = os.path.join(temp_indices_dir, f"{safe_user_id}.index")
+    metadata_path = os.path.join(temp_indices_dir, f"{safe_user_id}_metadata.json")
     
     assert os.path.exists(index_path)
     assert os.path.exists(metadata_path)
@@ -289,10 +292,11 @@ def test_property_weighted_memory_ranking(user_id, query):
     This ensures that emotionally significant memories are surfaced even if they
     are not the most semantically similar to the current query.
     """
+    import time
     engine = get_shared_engine()
     
-    # Use a unique user_id to avoid conflicts between test runs
-    test_user_id = f"prop_test_{user_id}"
+    # Use a unique user_id with timestamp to avoid conflicts between test runs
+    test_user_id = f"prop_test_{user_id}_{int(time.time() * 1000000)}"
     
     # Store memories with different weights
     # High-weight memory (crisis)

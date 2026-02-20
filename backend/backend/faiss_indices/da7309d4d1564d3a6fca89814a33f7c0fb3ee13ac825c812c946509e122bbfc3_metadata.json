@@ -1,0 +1,36 @@
+{
+  "messages": [
+    "I'm worried about my sick dog",
+    "I have a pet cat",
+    "I like playing video games",
+    "I'm worried about my sick dog",
+    "I have a pet cat",
+    "I like playing video games",
+    "I'm worried about my sick dog",
+    "I have a pet cat",
+    "I like playing video games"
+  ],
+  "timestamps": [
+    "2026-02-20T22:16:41.424866",
+    "2026-02-20T22:16:41.434897",
+    "2026-02-20T22:16:41.443794",
+    "2026-02-20T22:31:38.015493",
+    "2026-02-20T22:31:38.024205",
+    "2026-02-20T22:31:38.033232",
+    "2026-02-20T22:38:54.452929",
+    "2026-02-20T22:38:54.460451",
+    "2026-02-20T22:38:54.468470"
+  ],
+  "weights": [
+    0.9,
+    0.1,
+    0.5,
+    0.9,
+    0.1,
+    0.5,
+    0.9,
+    0.1,
+    0.5
+  ],
+  "vector_count": 9
+}
