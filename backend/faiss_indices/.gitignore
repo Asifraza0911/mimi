@@ -1,0 +1,6 @@
+# Ignore all FAISS index files and metadata
+*.index
+*_metadata.json
+
+# Keep the directory structure
+!.gitignore

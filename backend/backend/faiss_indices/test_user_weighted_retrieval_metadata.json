@@ -1,0 +1,27 @@
+{
+  "messages": [
+    "I'm worried about my sick dog",
+    "I have a pet cat",
+    "I like playing video games",
+    "I'm worried about my sick dog",
+    "I have a pet cat",
+    "I like playing video games"
+  ],
+  "timestamps": [
+    "2026-02-20T16:09:10.299866",
+    "2026-02-20T16:09:10.309905",
+    "2026-02-20T16:09:10.318947",
+    "2026-02-20T16:20:01.358046",
+    "2026-02-20T16:20:01.367814",
+    "2026-02-20T16:20:01.379338"
+  ],
+  "weights": [
+    0.9,
+    0.1,
+    0.5,
+    0.9,
+    0.1,
+    0.5
+  ],
+  "vector_count": 6
+}

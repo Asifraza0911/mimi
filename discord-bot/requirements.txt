@@ -1,0 +1,10 @@
+# Discord Bot Requirements for AI Waifu Cross-Platform System
+
+# Discord API library
+discord.py==2.3.2
+
+# HTTP requests to backend
+requests==2.31.0
+
+# Environment variable management
+python-dotenv==1.0.0

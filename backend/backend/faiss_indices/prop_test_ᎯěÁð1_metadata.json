@@ -1,0 +1,27 @@
+{
+  "messages": [
+    "I need help with something urgent",
+    "I like pizza and pasta",
+    "hi there",
+    "I need help with something urgent",
+    "I like pizza and pasta",
+    "hi there"
+  ],
+  "timestamps": [
+    "2026-02-20T16:16:31.403100",
+    "2026-02-20T16:16:31.439362",
+    "2026-02-20T16:16:31.474975",
+    "2026-02-20T16:16:31.554183",
+    "2026-02-20T16:16:31.589367",
+    "2026-02-20T16:16:31.624938"
+  ],
+  "weights": [
+    1.0,
+    0.5,
+    0.1,
+    1.0,
+    0.5,
+    0.1
+  ],
+  "vector_count": 6
+}
