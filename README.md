@@ -104,7 +104,40 @@ git clone <repository-url>
 cd ai-waifu-system
 ```
 
-### 2. Backend Setup
+### 2. Easy Start (Windows Only)
+
+**🚀 One-Click Startup:**
+
+Simply double-click `start-all.bat` to start all services at once!
+
+```batch
+start-all.bat
+```
+
+This will automatically:
+- Start the Backend API (http://localhost:8000)
+- Start the Web Client (http://localhost:4200)
+- Start the Discord Bot (connects to Discord)
+
+Each service runs in its own command window for easy monitoring.
+
+**🛑 One-Click Shutdown:**
+
+Double-click `stop-all.bat` to stop all services:
+
+```batch
+stop-all.bat
+```
+
+This will cleanly terminate all Python and Node processes.
+
+> **Note:** The batch files are Windows-only. For Linux/Mac, see manual setup below.
+
+### 3. Manual Setup (All Platforms)
+
+#### Backend Setup
+
+#### Backend Setup
 
 ```bash
 cd backend
@@ -124,7 +157,9 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 See [backend/README.md](backend/README.md) for detailed setup instructions.
 
-### 3. Web Client Setup
+#### Web Client Setup
+
+#### Web Client Setup
 
 ```bash
 cd web-client
@@ -141,7 +176,7 @@ ng serve
 
 **Web client will be available at:** `http://localhost:4200`
 
-### 4. Discord Bot Setup (Optional)
+#### Discord Bot Setup (Optional)
 
 ```bash
 cd discord-bot
