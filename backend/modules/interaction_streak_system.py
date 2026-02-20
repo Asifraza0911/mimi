@@ -8,8 +8,9 @@ encouraging daily engagement.
 Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.13
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Tuple
+from models import UserData, StreakResult
 
 
 class InteractionStreakSystem:
@@ -76,6 +77,66 @@ class InteractionStreakSystem:
         else:
             return (1, True)
     
+    def update_streak(self, user_id: str, user_data: UserData) -> StreakResult:
+        """
+        Update interaction streak and apply penalties if broken.
+        
+        This method:
+        1. Calculates the new streak value based on last_chat_date
+        2. Applies penalty if streak was broken
+        3. Updates Firestore with new values
+        
+        Args:
+            user_id: User identifier
+            user_data: Current user relationship state
+            
+        Returns:
+            StreakResult with new_streak, was_broken, affection_delta
+        """
+        from modules.firestore_operations import update_user_data
+        
+        # Get current date (timezone-aware)
+        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # Get last chat date (convert to date object for comparison)
+        last_chat_date = None
+        if user_data.last_chat_date:
+            if isinstance(user_data.last_chat_date, datetime):
+                last_chat_date = user_data.last_chat_date.date()
+            else:
+                last_chat_date = user_data.last_chat_date
+        
+        # Calculate new streak
+        new_streak, was_broken = self.calculate_streak(
+            last_chat_date,
+            current_date.date(),
+            user_data.daily_interaction_streak
+        )
+        
+        # Prepare updates
+        updates = {
+            "daily_interaction_streak": new_streak,
+            "last_chat_date": current_date
+        }
+        
+        affection_delta = 0
+        
+        # Apply penalty if streak was broken
+        if was_broken:
+            affection_delta = -self.streak_break_penalty
+            new_affection = max(0, user_data.affection_level + affection_delta)
+            updates["affection_level"] = new_affection
+            updates["mood"] = "sad"
+        
+        # Update Firestore
+        update_user_data(self.firestore, user_id, updates)
+        
+        return StreakResult(
+            new_streak=new_streak,
+            was_broken=was_broken,
+            affection_delta=affection_delta
+        )
+    
     def apply_streak_penalty(self, user_id: str, user_data: dict) -> dict:
         """
         Apply affection penalty and mood change when a streak is broken.
@@ -107,8 +168,8 @@ class InteractionStreakSystem:
         # Set mood to sad
         new_mood = "sad"
         
-        # Update last_chat_date to today
-        today = date.today()
+        # Update last_chat_date to today (use datetime for Firestore compatibility)
+        today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         
         # Prepare updates for Firestore
         updates = {

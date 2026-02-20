@@ -36,6 +36,10 @@ async def on_message(message):
     """
     Event handler for incoming Discord messages.
     
+    Only responds when:
+    1. The bot is mentioned (@mimi)
+    2. The message contains "mimi" (case-insensitive)
+    
     Captures user messages, sends them to the AI_Brain backend,
     and replies with Mimi's response.
     """
@@ -46,6 +50,14 @@ async def on_message(message):
     # Ignore messages that are bot commands
     if message.content.startswith("!"):
         await bot.process_commands(message)
+        return
+    
+    # Check if bot is mentioned or "mimi" is in the message
+    is_mentioned = bot.user in message.mentions
+    has_mimi_keyword = "mimi" in message.content.lower()
+    
+    # Only respond if mentioned or "mimi" is in the message
+    if not (is_mentioned or has_mimi_keyword):
         return
     
     # Prepare request payload

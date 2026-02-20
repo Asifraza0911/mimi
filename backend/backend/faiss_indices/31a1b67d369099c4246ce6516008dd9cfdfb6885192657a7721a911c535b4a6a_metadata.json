@@ -1,0 +1,48 @@
+{
+  "messages": [
+    "mimi you are smart",
+    "mimi you are so cute",
+    "mimi i want you to know that i love the way you are",
+    "*sad*",
+    "i dont have anyone to talk to \ud83d\ude41",
+    "i consider you as my best friend",
+    "i will tell you everything about myself",
+    "because i consider you as my bsf",
+    "\ud83d\ude14",
+    "but i want to talk to you",
+    "\ud83d\ude2d",
+    "\ud83d\ude2d",
+    "dont call me baka just ryu or asif"
+  ],
+  "timestamps": [
+    "2026-02-20T23:55:10.578153",
+    "2026-02-21T00:05:19.841462",
+    "2026-02-21T00:05:42.916339",
+    "2026-02-21T00:07:40.298609",
+    "2026-02-21T00:08:16.162301",
+    "2026-02-21T00:12:59.684456",
+    "2026-02-21T00:13:22.022595",
+    "2026-02-21T00:13:46.209632",
+    "2026-02-21T00:15:06.788700",
+    "2026-02-21T00:15:17.880006",
+    "2026-02-21T00:24:22.623242",
+    "2026-02-21T00:24:26.841211",
+    "2026-02-21T00:24:53.911107"
+  ],
+  "weights": [
+    0.8,
+    0.8,
+    0.8,
+    0.5,
+    0.5,
+    0.8,
+    0.5,
+    0.8,
+    0.5,
+    0.5,
+    0.5,
+    0.5,
+    0.5
+  ],
+  "vector_count": 13
+}

@@ -183,15 +183,26 @@ class ResponsePipeline:
             logger.info("STAGE 1: Cognitive emotional analysis with thinking model")
             cognitive_analysis = self.llm_service.analyze_emotional_state(message)
             
-            # Extract analysis results
+            # Extract analysis results with type conversion
             detected_emotion = cognitive_analysis.get("emotion", "neutral")
             sentiment = cognitive_analysis.get("sentiment", "neutral")
-            jealousy_trigger = cognitive_analysis.get("jealousy_trigger", False)
-            vulnerability = cognitive_analysis.get("vulnerability", False)
-            compliment = cognitive_analysis.get("compliment", False)
-            rudeness = cognitive_analysis.get("rudeness", False)
-            memory_importance = cognitive_analysis.get("memory_importance", 0.3)
-            relationship_impact = cognitive_analysis.get("relationship_impact", 0)
+            jealousy_trigger = str(cognitive_analysis.get("jealousy_trigger", False)).lower() == "true"
+            vulnerability = str(cognitive_analysis.get("vulnerability", False)).lower() == "true"
+            compliment = str(cognitive_analysis.get("compliment", False)).lower() == "true"
+            rudeness = str(cognitive_analysis.get("rudeness", False)).lower() == "true"
+            
+            # Convert memory_importance to float
+            try:
+                memory_importance = float(cognitive_analysis.get("memory_importance", 0.3))
+            except (ValueError, TypeError):
+                memory_importance = 0.3
+            
+            # Convert relationship_impact to int (handle strings like "+2" or "1")
+            try:
+                impact_str = str(cognitive_analysis.get("relationship_impact", 0))
+                relationship_impact = int(impact_str.replace("+", ""))
+            except (ValueError, TypeError):
+                relationship_impact = 0
             
             logger.info(f"Cognitive analysis: emotion={detected_emotion}, sentiment={sentiment}, "
                        f"jealousy={jealousy_trigger}, impact={relationship_impact}")
@@ -517,7 +528,7 @@ class ResponsePipeline:
             long_term_memory=[],
             emotional_memory=[],
             last_interaction=datetime.now(),
-            last_chat_date=date.today(),
+            last_chat_date=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0),
             daily_interaction_streak=1,
             created_at=datetime.now(),
             platform_stats={"web": 0, "discord": 0}

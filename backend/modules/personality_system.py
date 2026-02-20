@@ -226,6 +226,10 @@ class PersonalitySystem:
         # 1. Personality definition
         prompt_parts.append(self.personality_definition)
         prompt_parts.append("\n---\n")
+        
+        # CRITICAL: Response length instruction
+        prompt_parts.append("⚠️ RESPONSE STYLE: Keep responses SHORT and natural (1-2 sentences max). Talk like a real person texting, not an AI. Be casual, brief, and human-like.")
+        prompt_parts.append("\n")
 
         # 2. Current relationship state
         prompt_parts.append(f"CURRENT STATE:")

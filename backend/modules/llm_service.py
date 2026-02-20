@@ -12,11 +12,11 @@ The separation ensures:
 Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 19.3, 19.10, 19.11
 """
 
-import requests
 import logging
 import random
 import json
 from typing import Optional, Dict, Any
+from huggingface_hub import InferenceClient
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class LLMService:
     
     def __init__(self, api_token: str):
         """
-        Initialize LLM Service with dual-model architecture.
+        Initialize LLM Service with dual-model architecture using HuggingFace Router.
         
         Args:
             api_token: HuggingFace API token from environment configuration
@@ -64,13 +64,16 @@ class LLMService:
         """
         self.api_token = api_token
         
-        # Thinking Model - Cognitive Brain (Qwen3.5-397B-A17B)
-        self.thinking_model = "Qwen/Qwen3.5-397B-A17B"
-        self.thinking_api_url = f"https://api-inference.huggingface.co/models/{self.thinking_model}"
+        # Initialize HuggingFace InferenceClient with router endpoint
+        self.client = InferenceClient(
+            base_url="https://router.huggingface.co",
+            token=api_token
+        )
         
-        # Dialogue Model - Personality Brain (Qwen2.5-7B-Instruct)
+        # Using Qwen2.5-7B-Instruct for both thinking and dialogue
+        # Router will automatically route to available providers (Novita, Featherless, Together, Fireworks, Groq)
+        self.thinking_model = "Qwen/Qwen2.5-7B-Instruct"
         self.dialogue_model = "Qwen/Qwen2.5-7B-Instruct"
-        self.dialogue_api_url = f"https://api-inference.huggingface.co/models/{self.dialogue_model}"
         
         self.fallback_responses = [
             "H-hey! Don't ignore me like that!",
@@ -80,7 +83,8 @@ class LLMService:
             "D-don't look at me like that! I'm trying my best!"
         ]
         
-        logger.info(f"LLM Service initialized with dual-model architecture:")
+        logger.info(f"LLM Service initialized with HuggingFace Router:")
+        logger.info(f"  Router URL: https://router.huggingface.co")
         logger.info(f"  Thinking Model: {self.thinking_model}")
         logger.info(f"  Dialogue Model: {self.dialogue_model}")
     
@@ -93,7 +97,7 @@ class LLMService:
         """
         Stage 1: Use thinking model to analyze emotional and relational aspects.
         
-        This method uses Qwen3.5-397B-A17B to extract:
+        This method uses Qwen2.5-7B-Instruct to extract:
         - Emotion detection
         - Sentiment analysis
         - Jealousy triggers
@@ -140,62 +144,41 @@ User message: "{user_message}"
 
 Return ONLY JSON format:"""
         
-        # Prepare request
-        headers = {
-            "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "inputs": thinking_prompt,
-            "parameters": {
-                "max_new_tokens": 200,
-                "temperature": 0.3,  # Low temperature for analytical reasoning
-                "do_sample": True,
-                "top_p": 0.9
-            }
-        }
-        
         # Retry loop
         for attempt in range(max_retries):
             try:
                 logger.debug(f"Sending thinking model request (attempt {attempt + 1}/{max_retries})")
-                response = requests.post(
-                    self.thinking_api_url,
-                    headers=headers,
-                    json=payload,
-                    timeout=30
+                
+                # Use chat completion API for conversational models
+                messages = [
+                    {"role": "user", "content": thinking_prompt}
+                ]
+                
+                response = self.client.chat_completion(
+                    messages=messages,
+                    model=self.thinking_model,
+                    max_tokens=200,
+                    temperature=0.3
                 )
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    
-                    # Extract generated text
-                    if isinstance(result, list) and len(result) > 0:
-                        generated_text = result[0].get("generated_text", "")
-                        logger.debug(f"Thinking model output: {generated_text}")
-                        
-                        # Parse JSON from response
-                        try:
-                            # Extract JSON from response (may have extra text)
-                            json_start = generated_text.find('{')
-                            json_end = generated_text.rfind('}') + 1
-                            if json_start >= 0 and json_end > json_start:
-                                json_str = generated_text[json_start:json_end]
-                                analysis = json.loads(json_str)
-                                logger.info(f"Emotional analysis complete: {analysis}")
-                                return analysis
-                            else:
-                                logger.warning("No JSON found in thinking model response")
-                        except json.JSONDecodeError as e:
-                            logger.error(f"Failed to parse JSON from thinking model: {e}")
+                # Extract response text
+                response_text = response.choices[0].message.content
+                logger.debug(f"Thinking model output: {response_text}")
                 
-                # Handle errors
-                elif response.status_code == 503 and attempt < max_retries - 1:
-                    logger.warning("Thinking model loading, retrying...")
-                    continue
-                else:
-                    logger.error(f"Thinking model API error: {response.status_code}")
+                # Parse JSON from response
+                try:
+                    # Extract JSON from response (may have extra text)
+                    json_start = response_text.find('{')
+                    json_end = response_text.rfind('}') + 1
+                    if json_start >= 0 and json_end > json_start:
+                        json_str = response_text[json_start:json_end]
+                        analysis = json.loads(json_str)
+                        logger.info(f"Emotional analysis complete: {analysis}")
+                        return analysis
+                    else:
+                        logger.warning("No JSON found in thinking model response")
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON from thinking model: {e}")
                     
             except Exception as e:
                 logger.error(f"Thinking model request failed: {e}")
@@ -253,87 +236,44 @@ Return ONLY JSON format:"""
         """
         logger.info(f"Stage 2: Generating dialogue with temperature: {temperature}")
         
-        # Prepare request headers
-        headers = {
-            "Authorization": f"Bearer {self.api_token}",
-            "Content-Type": "application/json"
-        }
-        
-        # Prepare request payload with temperature parameter
-        payload = {
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": max_length,
-                "temperature": temperature,
-                "do_sample": True,
-                "top_p": 0.9,
-                "repetition_penalty": 1.2
-            }
-        }
-        
         # Retry loop for handling transient failures
         last_error = None
         for attempt in range(max_retries):
             try:
-                # Send request to dialogue model
                 logger.debug(f"Sending dialogue model request (attempt {attempt + 1}/{max_retries})")
-                response = requests.post(
-                    self.dialogue_api_url,
-                    headers=headers,
-                    json=payload,
-                    timeout=30
+                
+                # Use chat completion API for conversational models
+                # Add instruction for short, natural responses
+                system_message = (
+                    "You are Mimi, a tsundere anime girl. Respond in character. "
+                    "IMPORTANT: Keep responses SHORT (1-2 sentences max), natural, and human-like. "
+                    "Talk like a real person texting, not like an AI. Be casual and brief."
                 )
                 
-                # Check for successful response
-                if response.status_code == 200:
-                    result = response.json()
+                messages = [
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt}
+                ]
+                
+                response = self.client.chat_completion(
+                    messages=messages,
+                    model=self.dialogue_model,
+                    max_tokens=80,  # Reduced from 150 to force shorter responses
+                    temperature=temperature
+                )
+                
+                # Extract response text
+                response_text = response.choices[0].message.content
+                
+                # Truncate if still too long (keep only first 1-2 sentences)
+                sentences = response_text.split('.')
+                if len(sentences) > 2:
+                    response_text = '. '.join(sentences[:2]) + '.'
+                
+                logger.info(f"Successfully generated dialogue response (length: {len(response_text)})")
+                return response_text.strip()
                     
-                    # Extract generated text
-                    if isinstance(result, list) and len(result) > 0:
-                        generated_text = result[0].get("generated_text", "")
-                        logger.info(f"Successfully generated dialogue response (length: {len(generated_text)})")
-                        return generated_text.strip()
-                    else:
-                        logger.warning("Unexpected response format from dialogue model")
-                        return self.get_fallback_response()
-                
-                # Handle API errors
-                elif response.status_code == 503:
-                    logger.warning(f"Dialogue model is loading (attempt {attempt + 1}/{max_retries})")
-                    last_error = "Model loading"
-                    if attempt < max_retries - 1:
-                        continue
-                    else:
-                        logger.error("Max retries reached for model loading")
-                        return self.get_fallback_response()
-                
-                elif response.status_code == 401:
-                    logger.error("HuggingFace API authentication failed")
-                    raise LLMServiceError("Invalid API token")
-                
-                elif response.status_code >= 500:
-                    logger.warning(f"Dialogue model server error: {response.status_code} (attempt {attempt + 1}/{max_retries})")
-                    last_error = f"Server error: {response.status_code}"
-                    if attempt < max_retries - 1:
-                        continue
-                    else:
-                        logger.error(f"Max retries reached for server error: {response.text}")
-                        return self.get_fallback_response()
-                
-                else:
-                    logger.error(f"Dialogue model API error: {response.status_code} - {response.text}")
-                    return self.get_fallback_response()
-                    
-            except requests.exceptions.Timeout:
-                logger.warning(f"Dialogue model request timed out (attempt {attempt + 1}/{max_retries})")
-                last_error = "Timeout"
-                if attempt < max_retries - 1:
-                    continue
-                else:
-                    logger.error("Max retries reached for timeout")
-                    return self.get_fallback_response()
-            
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 logger.warning(f"Dialogue model request failed: {str(e)} (attempt {attempt + 1}/{max_retries})")
                 last_error = str(e)
                 if attempt < max_retries - 1:
@@ -341,10 +281,6 @@ Return ONLY JSON format:"""
                 else:
                     logger.error(f"Max retries reached for request exception: {str(e)}")
                     return self.get_fallback_response()
-            
-            except Exception as e:
-                logger.error(f"Unexpected error in dialogue model: {str(e)}", exc_info=True)
-                return self.get_fallback_response()
         
         # Should not reach here, but return fallback just in case
         logger.error(f"Exhausted all retries. Last error: {last_error}")

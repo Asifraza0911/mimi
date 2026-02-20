@@ -72,13 +72,30 @@ User Message → Response Pipeline → Affection Decay → Interaction Streak
 
 ## 🚀 Quick Start
 
+### 🎯 New Here? Start with the [GETTING_STARTED.md](GETTING_STARTED.md) Guide!
+
+This comprehensive guide will walk you through everything you need.
+
+### 📚 All Setup Guides
+
+Choose the guide that fits your needs:
+
+| Guide | Purpose | Time | Best For |
+|-------|---------|------|----------|
+| **[GETTING_STARTED.md](GETTING_STARTED.md)** | Complete overview & guide selection | 5 min | **Start here!** |
+| **[WHERE_TO_FIND_CREDENTIALS.md](WHERE_TO_FIND_CREDENTIALS.md)** | Visual guide to getting credentials | 10 min | First-time setup |
+| **[QUICK_START.md](QUICK_START.md)** | Fast setup instructions | 10 min | Experienced users |
+| **[SETUP_GUIDE.md](SETUP_GUIDE.md)** | Detailed step-by-step guide | 20 min | Comprehensive setup |
+| **[CREDENTIALS_CHECKLIST.md](CREDENTIALS_CHECKLIST.md)** | Track your progress | - | Staying organized |
+| **[TROUBLESHOOTING_CREDENTIALS.md](TROUBLESHOOTING_CREDENTIALS.md)** | Fix common issues | - | When things go wrong |
+
 ### Prerequisites
 
 - **Python 3.10+** (for backend and Discord bot)
 - **Node.js 18+** (for web client)
-- **Firebase Project** with Firestore enabled
-- **HuggingFace API Token** (free tier available)
-- **Discord Bot Token** (if using Discord)
+- **Firebase Project** with Firestore enabled (FREE)
+- **HuggingFace API Token** (FREE tier available)
+- **Discord Bot Token** (FREE, optional for Discord integration)
 
 ### 1. Clone Repository
 

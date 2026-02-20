@@ -106,8 +106,8 @@ class UserData(BaseModel):
     last_interaction: datetime = Field(
         default_factory=datetime.now, description="Last message timestamp"
     )
-    last_chat_date: Optional[date] = Field(
-        default_factory=date.today, description="Date of last chat for streak tracking"
+    last_chat_date: Optional[datetime] = Field(
+        default=None, description="Date of last chat for streak tracking (datetime for Firestore compatibility)"
     )
     daily_interaction_streak: int = Field(
         1, ge=0, description="Consecutive days of interaction"

@@ -78,7 +78,8 @@ def get_or_create_user(db: Client, user_id: str) -> UserData:
             # User doesn't exist, create with default values
             logger.info(f"Creating new user with default values for user_id: {user_id}")
             now = datetime.now()
-            today = date.today()
+            # Use datetime for Firestore compatibility (not date.today())
+            today_datetime = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             
             default_user_data = UserData(
                 user_id=user_id,
@@ -91,7 +92,7 @@ def get_or_create_user(db: Client, user_id: str) -> UserData:
                 long_term_memory=[],
                 emotional_memory=[],
                 last_interaction=now,
-                last_chat_date=today,
+                last_chat_date=today_datetime,
                 daily_interaction_streak=1,
                 created_at=now,
                 platform_stats={"web": 0, "discord": 0}

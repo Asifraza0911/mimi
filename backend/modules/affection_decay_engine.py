@@ -108,6 +108,12 @@ class AffectionDecayEngine:
         Returns:
             Number of hours passed (rounded down to integer)
         """
+        # Ensure both datetimes are timezone-naive for comparison
+        if last_interaction.tzinfo is not None:
+            last_interaction = last_interaction.replace(tzinfo=None)
+        if current_time.tzinfo is not None:
+            current_time = current_time.replace(tzinfo=None)
+        
         time_delta = current_time - last_interaction
         hours_passed = int(time_delta.total_seconds() / 3600)
         return hours_passed
