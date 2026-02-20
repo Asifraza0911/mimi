@@ -1,0 +1,124 @@
+/* Custom scrollbar styling for message container */
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #d8b4fe;
+  border-radius: 10px;
+}
+
+:host ::ng-deep .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #c084fc;
+}
+
+/* Smooth animations for messages */
+.space-y-4 > div {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading dots animation */
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+/* Textarea auto-resize behavior */
+textarea {
+  min-height: 60px;
+  max-height: 150px;
+  transition: border-color 0.2s ease;
+}
+
+/* Focus states with enhanced accessibility */
+textarea:focus {
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+button:focus {
+  outline: 2px solid rgba(168, 85, 247, 0.5);
+  outline-offset: 2px;
+}
+
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Message bubble hover effects */
+.max-w-xs:hover,
+.max-w-md:hover,
+.max-w-lg:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+/* Enhanced button states */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Adjust message bubble max width on mobile */
+  .max-w-xs {
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Smaller padding on mobile */
+  .p-4 {
+    padding: 0.75rem;
+  }
+}
+
+/* Dark mode support (optional future enhancement) */
+@media (prefers-color-scheme: dark) {
+  /* Can be implemented later if needed */
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -190,7 +190,7 @@ class TestLLMServiceTemperature:
             assert 'inputs' in payload
             assert payload['inputs'] == "Test prompt"
             assert 'parameters' in payload
-            assert payload['parameters']['max_length'] == 150
+            assert payload['parameters']['max_new_tokens'] == 150  # Changed from max_length
             assert payload['parameters']['temperature'] == 0.8
             assert payload['parameters']['do_sample'] is True
 

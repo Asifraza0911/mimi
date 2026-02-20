@@ -1,0 +1,109 @@
+<div class="flex flex-col h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-pink-50">
+  <!-- Header with AI State -->
+  <div class="bg-white shadow-md p-3 sm:p-4 border-b-2 border-pink-200">
+    <div class="max-w-4xl mx-auto">
+      <div class="flex justify-between items-center mb-2 sm:mb-3">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-purple-600">Chat with Mimi</h1>
+          <p class="text-xs sm:text-sm text-gray-600">Your tsundere AI companion</p>
+        </div>
+        
+        <!-- Mood Display -->
+        <div class="text-center">
+          <div class="text-2xl sm:text-3xl">{{ getMoodEmoji() }}</div>
+          <div class="text-xs text-gray-600 capitalize">{{ currentMood }}</div>
+        </div>
+      </div>
+      
+      <!-- Affection Meter Component -->
+      <app-affection-meter [affectionLevel]="affectionLevel"></app-affection-meter>
+    </div>
+  </div>
+
+  <!-- Message Container -->
+  <div 
+    #messageContainer
+    class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 max-w-4xl mx-auto w-full"
+  >
+    <!-- Messages -->
+    <div *ngFor="let message of messages" 
+         class="flex animate-fade-in"
+         [ngClass]="message.role === 'user' ? 'justify-end' : 'justify-start'">
+      
+      <!-- Message Bubble -->
+      <div 
+        class="max-w-[85%] sm:max-w-xs md:max-w-md lg:max-w-lg px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-md hover:shadow-lg transition-shadow"
+        [ngClass]="{
+          'bg-purple-500 text-white': message.role === 'user',
+          'bg-white text-gray-800 border-2 border-pink-200': message.role === 'assistant'
+        }"
+      >
+        <!-- Message Content -->
+        <div class="whitespace-pre-wrap break-words text-sm sm:text-base">{{ message.content }}</div>
+        
+        <!-- Timestamp -->
+        <div 
+          class="text-xs mt-1"
+          [ngClass]="{
+            'text-purple-100': message.role === 'user',
+            'text-gray-500': message.role === 'assistant'
+          }"
+        >
+          {{ message.timestamp | date:'short' }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading" class="flex justify-start animate-fade-in">
+      <div class="bg-white text-gray-800 border-2 border-pink-200 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-md">
+        <div class="flex items-center space-x-2">
+          <div class="w-2 h-2 bg-pink-400 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="max-w-4xl mx-auto w-full px-3 sm:px-4 py-2">
+    <div class="bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded relative animate-fade-in" role="alert">
+      <span class="block sm:inline text-sm">{{ errorMessage }}</span>
+      <button 
+        class="absolute top-0 bottom-0 right-0 px-3 sm:px-4 py-2 sm:py-3 hover:bg-red-200 transition-colors rounded-r"
+        (click)="errorMessage = ''"
+        aria-label="Close error message"
+      >
+        <span class="text-xl sm:text-2xl">&times;</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="bg-white shadow-lg p-3 sm:p-4 border-t-2 border-pink-200">
+    <div class="max-w-4xl mx-auto flex gap-2">
+      <!-- Text Input -->
+      <textarea
+        [(ngModel)]="currentMessage"
+        (keypress)="onKeyPress($event)"
+        [disabled]="isLoading"
+        placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
+        rows="2"
+        class="flex-1 px-3 sm:px-4 py-2 border-2 border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed text-sm sm:text-base transition-all"
+        aria-label="Message input"
+      ></textarea>
+
+      <!-- Send Button -->
+      <button
+        (click)="sendMessage()"
+        [disabled]="isLoading || !currentMessage.trim()"
+        class="px-4 sm:px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 active:bg-purple-700 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed font-semibold text-sm sm:text-base shadow-md hover:shadow-lg"
+        aria-label="Send message"
+      >
+        <span *ngIf="!isLoading">Send</span>
+        <span *ngIf="isLoading">...</span>
+      </button>
+    </div>
+  </div>
+</div>

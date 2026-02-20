@@ -3,6 +3,10 @@ Response Pipeline module for AI Waifu Cross-Platform System.
 
 This module orchestrates all processing modules to generate contextually-aware
 responses with emotional intelligence, memory retrieval, and relationship progression.
+
+DUAL-MODEL COGNITIVE ARCHITECTURE:
+- Stage 1: Thinking Model (Qwen3.5-397B) analyzes emotions and relationships
+- Stage 2: Dialogue Model (Qwen2.5-7B) generates tsundere personality responses
 """
 
 from datetime import datetime, timedelta
@@ -31,23 +35,22 @@ logger = logging.getLogger("ai_waifu.response_pipeline")
 
 class ResponsePipeline:
     """
-    Main orchestrator that coordinates all processing modules.
+    Main orchestrator that coordinates all processing modules with dual-model architecture.
     
     Pipeline execution order:
     1. Retrieve user data from Firestore
     2. Apply affection decay based on time since last interaction
     3. Update interaction streak and apply penalties if broken
-    4. Detect emotions and update mood
-    5. Update relationship state and attachment style
+    4. STAGE 1: Use thinking model (Qwen3.5) for emotional analysis
+    5. Update relationship state based on cognitive analysis
     6. Query similar memories with importance weighting
     7. Determine if callback memory should be triggered
     8. Get recent session context
-    9. Construct prompt with personality and callbacks
+    9. Construct prompt with personality and emotional state
     10. Get temperature based on current mood
-    11. Generate LLM response with scaled temperature
-    12. Assign importance weight to new memory
-    13. Store new memory with weight
-    14. Return response
+    11. STAGE 2: Use dialogue model (Qwen2.5) to generate tsundere response
+    12. Store new memory with importance weight
+    13. Update session context and return response
     """
     
     def __init__(
@@ -109,23 +112,26 @@ class ResponsePipeline:
         platform: str
     ) -> ChatResponse:
         """
-        Execute complete response generation pipeline with advanced systems.
+        Execute complete response generation pipeline with dual-model cognitive architecture.
         
-        Pipeline steps:
+        DUAL-MODEL PIPELINE:
+        
+        STAGE 1 - Thinking Model (Qwen3.5-397B-A17B):
         1. Retrieve user data from Firestore
         2. Apply affection decay based on time since last interaction
         3. Update interaction streak and apply penalties if broken
-        4. Detect emotions and update mood
-        5. Query similar memories with importance weighting
-        6. Determine if callback memory should be triggered
-        7. Get recent session context
-        8. Construct prompt with personality and callbacks
-        9. Get temperature based on current mood
-        10. Generate LLM response with scaled temperature
-        11. Update relationship state and attachment_state
-        12. Assign importance weight to new memory
-        13. Store new memory with weight
-        14. Update session context and return response
+        4. Cognitive emotional analysis (emotion, sentiment, jealousy, memory importance, relationship impact)
+        5. Update relationship state based on cognitive analysis
+        
+        STAGE 2 - Dialogue Model (Qwen2.5-7B-Instruct):
+        6. Query similar memories with importance weighting
+        7. Determine if callback memory should be triggered
+        8. Get recent session context
+        9. Construct prompt with personality and emotional state
+        10. Get temperature based on current mood
+        11. Generate tsundere personality response
+        12. Store new memory with cognitive importance weight
+        13. Update session context and return response
         
         Args:
             user_id: User identifier
@@ -172,18 +178,53 @@ class ResponsePipeline:
             logger.warning("Skipping streak update")
             streak_result = StreakResult(new_streak=1, was_broken=False, affection_delta=0)
         
-        # Step 4: Detect emotions with error handling
+        # Step 4: STAGE 1 - Use thinking model for cognitive emotional analysis
         try:
-            emotion_result = self.emotion_engine.detect_emotions(message, user_id)
-            if emotion_result.detected_mood and emotion_result.detected_mood != "neutral":
-                user_data.mood = emotion_result.detected_mood
-                user_data.affection_level = max(0, min(100, user_data.affection_level + emotion_result.affection_delta))
-                logger.info(f"Emotion detected: {emotion_result.detected_mood}, affection delta: {emotion_result.affection_delta}")
-        except EmotionEngineError as e:
-            logger.error(f"Emotion engine failed: {e}")
-            logger.warning("Using neutral mood as fallback")
-            # Use neutral mood as fallback
-            emotion_result = EmotionResult(detected_mood="neutral", affection_delta=0, triggers=[])
+            logger.info("STAGE 1: Cognitive emotional analysis with thinking model")
+            cognitive_analysis = self.llm_service.analyze_emotional_state(message)
+            
+            # Extract analysis results
+            detected_emotion = cognitive_analysis.get("emotion", "neutral")
+            sentiment = cognitive_analysis.get("sentiment", "neutral")
+            jealousy_trigger = cognitive_analysis.get("jealousy_trigger", False)
+            vulnerability = cognitive_analysis.get("vulnerability", False)
+            compliment = cognitive_analysis.get("compliment", False)
+            rudeness = cognitive_analysis.get("rudeness", False)
+            memory_importance = cognitive_analysis.get("memory_importance", 0.3)
+            relationship_impact = cognitive_analysis.get("relationship_impact", 0)
+            
+            logger.info(f"Cognitive analysis: emotion={detected_emotion}, sentiment={sentiment}, "
+                       f"jealousy={jealousy_trigger}, impact={relationship_impact}")
+            
+            # Update mood based on cognitive analysis
+            if detected_emotion and detected_emotion != "neutral":
+                user_data.mood = detected_emotion
+            
+            # Apply relationship impact to affection
+            user_data.affection_level = max(0, min(100, user_data.affection_level + relationship_impact))
+            
+            # Create EmotionResult for compatibility with existing code
+            emotion_result = EmotionResult(
+                detected_mood=detected_emotion,
+                affection_delta=relationship_impact,
+                triggers=["jealousy"] if jealousy_trigger else []
+            )
+            
+        except Exception as e:
+            logger.error(f"Cognitive analysis failed: {e}")
+            logger.warning("Falling back to rule-based emotion detection")
+            # Fallback to traditional emotion engine
+            try:
+                emotion_result = self.emotion_engine.detect_emotions(message, user_id)
+                if emotion_result.detected_mood and emotion_result.detected_mood != "neutral":
+                    user_data.mood = emotion_result.detected_mood
+                    user_data.affection_level = max(0, min(100, user_data.affection_level + emotion_result.affection_delta))
+                memory_importance = 0.3  # Default
+            except EmotionEngineError as e2:
+                logger.error(f"Emotion engine also failed: {e2}")
+                logger.warning("Using neutral mood as fallback")
+                emotion_result = EmotionResult(detected_mood="neutral", affection_delta=0, triggers=[])
+                memory_importance = 0.3
         
         # Step 5: Query similar memories with importance weighting with error handling
         similar_memories = []
@@ -256,12 +297,13 @@ class ResponsePipeline:
         temperature = self.temperature_scaling_system.get_temperature(user_data.mood)
         logger.debug(f"Temperature for mood '{user_data.mood}': {temperature}")
         
-        # Step 10: Generate LLM response with scaled temperature with error handling
+        # Step 10: STAGE 2 - Use dialogue model to generate tsundere response with error handling
         try:
+            logger.info("STAGE 2: Generating tsundere dialogue with dialogue model")
             reply = self.llm_service.generate_response(prompt, temperature=temperature)
-            logger.info(f"LLM response generated for user {user_id}")
+            logger.info(f"Dialogue response generated for user {user_id}")
         except LLMServiceError as e:
-            logger.error(f"LLM service failed: {e}")
+            logger.error(f"Dialogue model failed: {e}")
             logger.warning("Using fallback response")
             # Use fallback response
             reply = self.llm_service.get_fallback_response()
@@ -280,15 +322,16 @@ class ResponsePipeline:
             logger.error(f"Relationship engine failed: {e}")
             logger.warning("Skipping relationship update")
         
-        # Step 12: Assign importance weight to new memory
-        is_important, memory_weight = self.is_important_memory(message, emotion_result)
-        logger.debug(f"Memory importance determined: important={is_important}, weight={memory_weight}")
+        # Step 12: Use memory importance from cognitive analysis
+        # The thinking model already determined memory importance (0.0-1.0)
+        is_important = memory_importance >= 0.5
+        logger.debug(f"Memory importance from cognitive analysis: {memory_importance}, storing: {is_important}")
         
-        # Step 13: Store new memory with weight with error handling
+        # Step 13: Store new memory with weight from cognitive analysis with error handling
         if is_important:
             try:
-                self.memory_engine.store_memory(user_id, message, is_important, weight=memory_weight)
-                logger.info(f"Memory stored with weight {memory_weight}")
+                self.memory_engine.store_memory(user_id, message, is_important, weight=memory_importance)
+                logger.info(f"Memory stored with weight {memory_importance}")
             except MemoryEngineError as e:
                 logger.error(f"Memory storage failed: {e}")
                 logger.warning("Skipping memory storage")

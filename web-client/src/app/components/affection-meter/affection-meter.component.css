@@ -1,0 +1,89 @@
+.affection-meter {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+/* Smooth animation for progress bar */
+.affection-meter .transition-all {
+  transition-property: width, background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse animation for high affection levels */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(236, 72, 153, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.8);
+  }
+}
+
+.bg-pink-500 {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Hover effect for the entire meter */
+.affection-meter:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Heart icon animation */
+.affection-meter .text-2xl {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.affection-meter:hover .text-2xl {
+  transform: scale(1.2);
+}
+
+/* Stage marker styling */
+.affection-meter .text-xs {
+  user-select: none;
+}
+
+/* Shine effect animation */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.affection-meter .bg-gradient-to-r {
+  animation: shine 3s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .affection-meter {
+    padding: 0.25rem;
+  }
+  
+  .affection-meter .text-2xl {
+    font-size: 1.5rem;
+  }
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .affection-meter:hover {
+    transform: none;
+  }
+  
+  .affection-meter:hover .text-2xl {
+    transform: none;
+  }
+  
+  .bg-pink-500 {
+    animation: none;
+  }
+  
+  .affection-meter .bg-gradient-to-r {
+    animation: none;
+  }
+}

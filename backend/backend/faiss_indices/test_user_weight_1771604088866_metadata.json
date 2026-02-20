@@ -1,0 +1,18 @@
+{
+  "messages": [
+    "Crisis message",
+    "Normal message",
+    "Casual message"
+  ],
+  "timestamps": [
+    "2026-02-20T21:44:48.879826",
+    "2026-02-20T21:44:48.890355",
+    "2026-02-20T21:44:48.901051"
+  ],
+  "weights": [
+    1.0,
+    0.5,
+    0.1
+  ],
+  "vector_count": 3
+}

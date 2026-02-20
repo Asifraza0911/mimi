@@ -8,6 +8,9 @@
     "hi there",
     "I need help with something urgent",
     "I like pizza and pasta",
+    "hi there",
+    "I need help with something urgent",
+    "I like pizza and pasta",
     "hi there"
   ],
   "timestamps": [
@@ -19,7 +22,10 @@
     "2026-02-20T16:08:36.790359",
     "2026-02-20T16:16:27.097820",
     "2026-02-20T16:16:27.143900",
-    "2026-02-20T16:16:27.175943"
+    "2026-02-20T16:16:27.175943",
+    "2026-02-20T21:43:35.842856",
+    "2026-02-20T21:43:35.883627",
+    "2026-02-20T21:43:35.924386"
   ],
   "weights": [
     1.0,
@@ -30,7 +36,10 @@
     0.1,
     1.0,
     0.5,
+    0.1,
+    1.0,
+    0.5,
     0.1
   ],
-  "vector_count": 9
+  "vector_count": 12
 }
