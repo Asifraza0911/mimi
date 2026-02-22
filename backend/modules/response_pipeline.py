@@ -240,7 +240,8 @@ class ResponsePipeline:
         # Step 5: Query similar memories with importance weighting with error handling
         similar_memories = []
         try:
-            similar_memories = self.memory_engine.retrieve_similar(user_id, message, k=3)
+            # Retrieve more memories (5 instead of 3) for better context
+            similar_memories = self.memory_engine.retrieve_similar(user_id, message, k=5)
             logger.debug(f"Retrieved {len(similar_memories)} similar memories")
         except MemoryEngineError as e:
             logger.error(f"Memory engine retrieval failed: {e}")
@@ -268,6 +269,10 @@ class ResponsePipeline:
         
         # Step 8: Construct prompt with personality and callbacks with error handling
         try:
+            # Get current date and time for context
+            from datetime import datetime
+            current_datetime = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+            
             # Convert UserData to dict for personality_system compatibility
             user_data_dict = {
                 "affection_level": user_data.affection_level,
@@ -295,7 +300,9 @@ class ResponsePipeline:
                 recent_context=recent_context_dicts,
                 attachment_state=user_data.attachment_state,
                 daily_interaction_streak=user_data.daily_interaction_streak,
-                streak_broken=streak_result.was_broken
+                streak_broken=streak_result.was_broken,
+                current_datetime=current_datetime,
+                user_id=user_id
             )
             logger.debug("Prompt constructed with all context")
         except Exception as e:
@@ -335,17 +342,33 @@ class ResponsePipeline:
         
         # Step 12: Use memory importance from cognitive analysis
         # The thinking model already determined memory importance (0.0-1.0)
-        is_important = memory_importance >= 0.5
-        logger.debug(f"Memory importance from cognitive analysis: {memory_importance}, storing: {is_important}")
         
-        # Step 13: Store new memory with weight from cognitive analysis with error handling
-        if is_important:
-            try:
-                self.memory_engine.store_memory(user_id, message, is_important, weight=memory_importance)
-                logger.info(f"Memory stored with weight {memory_importance}")
-            except MemoryEngineError as e:
-                logger.error(f"Memory storage failed: {e}")
-                logger.warning("Skipping memory storage")
+        # Check for personal information keywords that should ALWAYS be stored
+        message_lower = message.lower()
+        personal_info_keywords = [
+            "my name is", "i am", "i'm", "call me", "name is",
+            "i like", "i love", "i hate", "my favorite",
+            "i work", "i study", "i live", "i'm from"
+        ]
+        has_personal_info = any(keyword in message_lower for keyword in personal_info_keywords)
+        
+        # CRITICAL FIX: Store ALL user messages in vector memory for conversation continuity
+        # Only store in Firestore long_term_memory if truly important
+        store_in_firestore = memory_importance >= 0.5 or has_personal_info
+        
+        # Boost importance for personal information
+        if has_personal_info and memory_importance < 0.7:
+            memory_importance = 0.8
+        
+        logger.debug(f"Memory importance: {memory_importance}, personal_info: {has_personal_info}, firestore: {store_in_firestore}")
+        
+        # Step 13: ALWAYS store in vector memory (FAISS) for conversation continuity
+        try:
+            self.memory_engine.store_memory(user_id, message, store_in_firestore, weight=memory_importance)
+            logger.info(f"Memory stored in FAISS with weight {memory_importance}, Firestore: {store_in_firestore}")
+        except MemoryEngineError as e:
+            logger.error(f"Memory storage failed: {e}")
+            logger.warning("Skipping memory storage")
         
         # Step 14: Update session context
         self.update_session_context(user_id, Message(role="user", content=message))
@@ -353,6 +376,24 @@ class ResponsePipeline:
         
         # Update last interaction timestamp
         user_data.last_interaction = datetime.now()
+        
+        # Step 15: Persist updated user data to Firestore
+        try:
+            from modules.firestore_operations import update_user_data
+            update_user_data(self.firestore, user_id, {
+                "affection_level": user_data.affection_level,
+                "trust_level": user_data.trust_level,
+                "mood": user_data.mood,
+                "relationship_stage": user_data.relationship_stage,
+                "attachment_state": user_data.attachment_state,
+                "last_interaction": user_data.last_interaction,
+                "last_chat_date": user_data.last_chat_date,
+                "daily_interaction_streak": user_data.daily_interaction_streak
+            })
+            logger.info(f"User data persisted to Firestore for user {user_id}")
+        except Exception as e:
+            logger.error(f"Failed to persist user data to Firestore: {e}")
+            logger.warning("Continuing without Firestore persistence")
         
         # Return response
         return ChatResponse(

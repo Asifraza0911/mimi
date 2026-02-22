@@ -258,17 +258,17 @@ Return ONLY JSON format:"""
                 response = self.client.chat_completion(
                     messages=messages,
                     model=self.dialogue_model,
-                    max_tokens=80,  # Reduced from 150 to force shorter responses
+                    max_tokens=150,  # Increased to allow complete sentences
                     temperature=temperature
                 )
                 
                 # Extract response text
                 response_text = response.choices[0].message.content
                 
-                # Truncate if still too long (keep only first 1-2 sentences)
+                # Only truncate if response is excessively long (more than 3 sentences)
                 sentences = response_text.split('.')
-                if len(sentences) > 2:
-                    response_text = '. '.join(sentences[:2]) + '.'
+                if len(sentences) > 3:
+                    response_text = '. '.join(sentences[:3]) + '.'
                 
                 logger.info(f"Successfully generated dialogue response (length: {len(response_text)})")
                 return response_text.strip()

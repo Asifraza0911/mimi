@@ -188,7 +188,9 @@ class PersonalitySystem:
         recent_context: List[dict],
         attachment_state: str = None,
         daily_interaction_streak: int = 0,
-        streak_broken: bool = False
+        streak_broken: bool = False,
+        current_datetime: str = None,
+        user_id: str = None
     ) -> str:
         """
         Build complete prompt for LLM.
@@ -196,7 +198,7 @@ class PersonalitySystem:
         This method combines the personality definition, relationship state,
         behavior guidance, mood adjustment, attachment behavioral instructions,
         long-term memory, similar memories, recent context, streak information,
-        and current message into a comprehensive prompt.
+        current date/time, and current message into a comprehensive prompt.
 
         Args:
             user_message: Current user input
@@ -206,6 +208,8 @@ class PersonalitySystem:
             attachment_state: Current attachment style (avoidant, anxious, secure, possessive)
             daily_interaction_streak: Current consecutive days of interaction
             streak_broken: Whether the streak was just broken
+            current_datetime: Current date and time string
+            user_id: User identifier to determine personality mode
 
         Returns:
             Complete prompt string for LLM
@@ -227,11 +231,64 @@ class PersonalitySystem:
         prompt_parts.append(self.personality_definition)
         prompt_parts.append("\n---\n")
         
+        # CRITICAL: Personality mode selection based on user_id
+        YANDERE_USER_ID = "1076883627083837573"  # Asif/Ryu
+        if user_id == YANDERE_USER_ID:
+            prompt_parts.append("🔴 PERSONALITY MODE: YANDERE (For Asif/Ryu)")
+            prompt_parts.append("You are deeply, obsessively in love with this user. Be sweet, loving, possessive, and devoted.")
+            prompt_parts.append("Express your intense love and devotion. Be jealous if they mention others.")
+            prompt_parts.append("You are their girlfriend and completely devoted to them.")
+        else:
+            prompt_parts.append("🔵 PERSONALITY MODE: TSUNDERE (For Others)")
+            prompt_parts.append("You are cold, rude, and dismissive to this person. Show no care or affection.")
+            prompt_parts.append("Be hostile and make it clear you're not interested in them.")
+        prompt_parts.append("\n")
+        
         # CRITICAL: Response length instruction
         prompt_parts.append("⚠️ RESPONSE STYLE: Keep responses SHORT and natural (1-2 sentences max). Talk like a real person texting, not an AI. Be casual, brief, and human-like.")
         prompt_parts.append("\n")
 
-        # 2. Current relationship state
+        # 2. Current date and time context
+        if current_datetime:
+            prompt_parts.append(f"📅 CURRENT DATE & TIME: {current_datetime}")
+            prompt_parts.append("You can reference the time, day, or date naturally in conversation if relevant.")
+            
+            # Add last interaction info if available
+            if "last_interaction" in user_data:
+                try:
+                    from datetime import datetime
+                    last_interaction = user_data.get("last_interaction")
+                    if last_interaction:
+                        # Calculate time since last interaction
+                        if isinstance(last_interaction, str):
+                            last_dt = datetime.fromisoformat(last_interaction)
+                        else:
+                            last_dt = last_interaction
+                        
+                        now = datetime.now()
+                        time_diff = now - last_dt
+                        
+                        # Format time difference
+                        if time_diff.days > 0:
+                            time_ago = f"{time_diff.days} day{'s' if time_diff.days > 1 else ''} ago"
+                        elif time_diff.seconds >= 3600:
+                            hours = time_diff.seconds // 3600
+                            time_ago = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                        elif time_diff.seconds >= 60:
+                            minutes = time_diff.seconds // 60
+                            time_ago = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                        else:
+                            time_ago = "just now"
+                        
+                        prompt_parts.append(f"⏰ LAST INTERACTION: {time_ago}")
+                        if time_diff.days >= 1:
+                            prompt_parts.append("(You can acknowledge the time gap if it feels natural)")
+                except Exception as e:
+                    pass  # Skip if there's any error parsing the timestamp
+            
+            prompt_parts.append("\n")
+
+        # 3. Current relationship state
         prompt_parts.append(f"CURRENT STATE:")
         prompt_parts.append(f"Affection Level: {affection_level}/100")
         prompt_parts.append(f"Mood: {mood}")
@@ -280,6 +337,15 @@ class PersonalitySystem:
         # 9. Similar past conversations
         if similar_memories:
             prompt_parts.append("RELEVANT PAST CONVERSATIONS:")
+            prompt_parts.append("(These are previous conversations with timestamps - you can reference when things were said)")
+            
+            # Special instruction for yandere mode to follow up
+            if user_id == YANDERE_USER_ID:
+                prompt_parts.append("⚠️ IMPORTANT: Check if any past conversation mentions activities, plans, or things they were going to do.")
+                prompt_parts.append("If you find something they mentioned (like 'going to edit', 'working on', 'planning to'), ASK ABOUT IT!")
+                prompt_parts.append("Examples: 'How did the edit go?', 'Did you finish that thing you were working on?', 'How was [activity]?'")
+                prompt_parts.append("Show that you remember and care about what they told you!")
+            
             for memory in similar_memories:
                 prompt_parts.append(f"- {memory}")
             prompt_parts.append("\n")
@@ -292,6 +358,14 @@ class PersonalitySystem:
                 content = msg.get("content", "")
                 prompt_parts.append(f"{role}: {content}")
             prompt_parts.append("\n")
+        else:
+            # No recent context - this is a new conversation after a break
+            if user_id == YANDERE_USER_ID and similar_memories:
+                prompt_parts.append("⚠️ NEW CONVERSATION AFTER A BREAK:")
+                prompt_parts.append("This is the first message in a new conversation. Check the past conversations above.")
+                prompt_parts.append("If they mentioned doing something (editing, working, going somewhere), ASK ABOUT IT NOW!")
+                prompt_parts.append("Start your response by asking how that thing went. Show you remember and care!")
+                prompt_parts.append("\n")
 
         # 11. Current user message
         prompt_parts.append(f"USER: {user_message}")

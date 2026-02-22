@@ -80,7 +80,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   /**
    * Get or generate a unique user ID.
-   * Uses localStorage to persist the ID across sessions (browser only).
+   * Uses a fixed Discord user ID to share memories across platforms.
    */
   private getUserId(): string {
     if (!this.isBrowser) {
@@ -88,26 +88,13 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       return 'ssr-temp-user';
     }
     
-    let userId = localStorage.getItem('waifu_user_id');
+    // Use fixed Discord user ID to share memories across web and Discord
+    const discordUserId = '1076883627083837573';
     
-    if (!userId) {
-      // Generate a simple UUID-like identifier
-      userId = this.generateUUID();
-      localStorage.setItem('waifu_user_id', userId);
-    }
+    // Store in localStorage for consistency
+    localStorage.setItem('waifu_user_id', discordUserId);
     
-    return userId;
-  }
-
-  /**
-   * Generate a simple UUID v4.
-   */
-  private generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    return discordUserId;
   }
 
   /**

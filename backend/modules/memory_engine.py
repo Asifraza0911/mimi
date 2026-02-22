@@ -278,6 +278,7 @@ class MemoryEngine:
         
         Memories are ranked by the product of similarity_score * Memory_Weight.
         This prioritizes emotionally significant memories even if similarity is moderate.
+        Each memory is returned with its timestamp for temporal context.
         
         Args:
             user_id: User identifier
@@ -285,7 +286,8 @@ class MemoryEngine:
             k: Number of results to return (default: 3)
             
         Returns:
-            List of similar past messages (up to k messages), ranked by weighted score
+            List of similar past messages with timestamps (up to k messages), ranked by weighted score
+            Format: "[timestamp] message text"
             
         Requirements: 3.4, 17.4, 17.5, 17.6, 17.10
         """
@@ -325,11 +327,15 @@ class MemoryEngine:
                 # Get weight for this memory (default to 0.5 if not present)
                 weight = metadata["weights"][idx] if idx < len(metadata["weights"]) else 0.5
                 
+                # Get timestamp for this memory
+                timestamp = metadata["timestamps"][idx] if idx < len(metadata["timestamps"]) else None
+                
                 # Calculate weighted score
                 weighted_score = similarity_score * weight
                 
                 weighted_results.append({
                     "message": metadata["messages"][idx],
+                    "timestamp": timestamp,
                     "weighted_score": weighted_score,
                     "similarity": similarity_score,
                     "weight": weight
@@ -338,8 +344,20 @@ class MemoryEngine:
         # Sort by weighted score (descending)
         weighted_results.sort(key=lambda x: x["weighted_score"], reverse=True)
         
-        # Return top k messages
-        similar_messages = [result["message"] for result in weighted_results[:k]]
+        # Return top k messages with timestamps
+        similar_messages = []
+        for result in weighted_results[:k]:
+            # Format timestamp for readability
+            if result["timestamp"]:
+                try:
+                    from datetime import datetime
+                    dt = datetime.fromisoformat(result["timestamp"])
+                    time_str = dt.strftime("%b %d at %I:%M %p")
+                    similar_messages.append(f"[{time_str}] {result['message']}")
+                except:
+                    similar_messages.append(result["message"])
+            else:
+                similar_messages.append(result["message"])
         
         logger.info(f"Retrieved {len(similar_messages)} similar memories for user {user_id}")
         if weighted_results:
